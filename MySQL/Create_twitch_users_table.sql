@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS twitch_users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    followed_streamers VARCHAR(255) NOT NULL
+);
