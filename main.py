@@ -50,12 +50,11 @@ async def read_users():
 @app.post('/users/')
 async def create_user(user: UserCreate):
     mydb_connection, mycursor = get_db()
-    #data = await request.json()
     try:
         username = user.name
         followed_streamers = user.followed_streamers
-        sql = f'INSERT INTO `twitch_users` (name, followed_streamers) VALUES ("{username}", "{followed_streamers}");'
-        mycursor.execute(sql)
+        sql = "INSERT INTO `twitch_users` (name, followed_streamers) VALUES (%s, %s);"
+        mycursor.execute(sql, (username, followed_streamers))
         mydb_connection.commit()
         return JSONResponse(content={"message": "User created successfully"}, status_code=201)
     except mysql.connector.Error as err:
@@ -67,20 +66,22 @@ async def create_user(user: UserCreate):
 async def update_user(user_id: int, user: UserUpdate):
     mydb_connection, mycursor = get_db()
     try:
-        #data = await request.json()
-        #name = data.get("name")
-        #followed_streamers = data.get("followed_streamers")
         name = user.name
         followed_streamers = user.followed_streamers
         update_fields = []
+        params = []
+
         if name:
-            update_fields.append(f'name="{name}"')
+            update_fields.append("name = %s")
+            params.append(name)
         if followed_streamers:
-            update_fields.append(f'followed_streamers="{followed_streamers}"')
+            update_fields.append("followed_streamers = %s")
+            params.append(followed_streamers)
         if not update_fields:
             raise HTTPException(status_code=400, detail="No fields to update")
-        sql = f'UPDATE `twitch_users` SET {", ".join(update_fields)} WHERE id={user_id};'
-        mycursor.execute(sql)
+        
+        sql = f'UPDATE `twitch_users` SET {", ".join(update_fields)} WHERE id= %s;'
+        mycursor.execute(sql, params)
         mydb_connection.commit()
         if mycursor.rowcount == 0:
             raise HTTPException(status_code=404, detail="User not found")
@@ -95,8 +96,8 @@ async def update_user(user_id: int, user: UserUpdate):
 async def delete_user(user_id: int):
     mydb_connection, mycursor = get_db()
     try:
-        sql = f'DELETE FROM twitch_users WHERE id={user_id};'
-        mycursor.execute(sql)
+        sql = "DELETE FROM twitch_users WHERE id=%s;"
+        mycursor.execute(sql, (user_id,))
         mydb_connection.commit()
         if mycursor.rowcount == 0:
             raise HTTPException(status_code=404, detail="User not found")
