@@ -1,6 +1,8 @@
 from fastapi import Request, FastAPI, HTTPException
 import mysql.connector
 from pydantic import BaseModel, Field
+from config.connections import DatabaseConnection
+import os
 
 app = FastAPI()
 
