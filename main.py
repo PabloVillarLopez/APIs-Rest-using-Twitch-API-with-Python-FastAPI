@@ -31,9 +31,13 @@ async def read_users():
     mydb = get_db()
     mydb_connection = await mydb.get_db_connection()
     mycursor = mydb_connection.cursor()
-    mycursor.execute("SELECT * FROM twitch_users;")
-    result = mycursor.fetchall()
-    return result
+    try:
+        mycursor.execute("SELECT * FROM twitch_users;")
+        result = mycursor.fetchall()
+        return result
+    finally:
+        mycursor.close()
+        mydb_connection.close()
 
 @app.post('/users/')
 async def create_user(user: UserCreate):
@@ -41,48 +45,59 @@ async def create_user(user: UserCreate):
     mydb_connection = mydb.get_db_connection()
     mycursor = mydb_connection.cursor()
     #data = await request.json()
-    username = user.name
-    followed_streamers = user.followed_streamers
-    sql = f'INSERT INTO `twitch_users` (name, followed_streamers) VALUES ("{username}", "{followed_streamers}");'
-    mycursor.execute(sql)
-    mydb_connection.commit()
-    return JSONResponse(content={"message": "User created successfully"}, status_code=201)
+    try:
+        username = user.name
+        followed_streamers = user.followed_streamers
+        sql = f'INSERT INTO `twitch_users` (name, followed_streamers) VALUES ("{username}", "{followed_streamers}");'
+        mycursor.execute(sql)
+        mydb_connection.commit()
+        return JSONResponse(content={"message": "User created successfully"}, status_code=201)
+    finally:
+        mycursor.close()
+        mydb_connection.close()
 
 @app.put('/users/{user_id}')
 async def update_user(user_id: int, user: UserUpdate):
     mydb = get_db()
     mydb_connection = mydb.get_db_connection()
     mycursor = mydb_connection.cursor()
-    #data = await request.json()
-    #name = data.get("name")
-    #followed_streamers = data.get("followed_streamers")
-    name = user.name
-    followed_streamers = user.followed_streamers
-    update_fields = []
-    if name:
-        update_fields.append(f'name="{name}"')
-    if followed_streamers:
-        update_fields.append(f'followed_streamers="{followed_streamers}"')
-    if not update_fields:
-        raise HTTPException(status_code=400, detail="No fields to update")
+    try:
+        #data = await request.json()
+        #name = data.get("name")
+        #followed_streamers = data.get("followed_streamers")
+        name = user.name
+        followed_streamers = user.followed_streamers
+        update_fields = []
+        if name:
+            update_fields.append(f'name="{name}"')
+        if followed_streamers:
+            update_fields.append(f'followed_streamers="{followed_streamers}"')
+        if not update_fields:
+            raise HTTPException(status_code=400, detail="No fields to update")
+        sql = f'UPDATE `twitch_users` SET {", ".join(update_fields)} WHERE id={user_id};'
+        mycursor.execute(sql)
+        mydb_connection.commit()
+        if mycursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="User not found")
 
-    sql = f'UPDATE `twitch_users` SET {", ".join(update_fields)} WHERE id={user_id};'
-    mycursor.execute(sql)
-    mydb_connection.commit()
-    if mycursor.rowcount == 0:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    return JSONResponse(content={"message": "User modified successfully"}, status_code=200)
+        return JSONResponse(content={"message": "User modified successfully"}, status_code=200)
+    finally:
+        mycursor.close()
+        mydb_connection.close()
 
 @app.delete('/users/{user_id}')
 async def delete_user(user_id: int):
     mydb = get_db()
     mydb_connection = mydb.get_db_connection()
     mycursor = mydb_connection.cursor()
-    sql = f'DELETE FROM twitch_users WHERE id={user_id};'
-    mycursor.execute(sql)
-    mydb_connection.commit()
-    if mycursor.rowcount == 0:
-        raise HTTPException(status_code=404, detail="User not found")
+    try:
+        sql = f'DELETE FROM twitch_users WHERE id={user_id};'
+        mycursor.execute(sql)
+        mydb_connection.commit()
+        if mycursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="User not found")
 
-    return JSONResponse(content={"message": "User deleted successfully"}, status_code=200)
+        return JSONResponse(content={"message": "User deleted successfully"}, status_code=200)
+    finally:
+        mycursor.close()
+        mydb_connection.close()
