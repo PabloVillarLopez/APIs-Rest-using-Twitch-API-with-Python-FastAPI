@@ -89,7 +89,7 @@ async def read_users():
         close_db(mydb_connection, mycursor)
 
 @app.post('/users/')
-async def create_user(user: UserCreate):
+def create_user(user: UserCreate):
     mydb_connection, mycursor = get_db()
     try:
         username = user.name

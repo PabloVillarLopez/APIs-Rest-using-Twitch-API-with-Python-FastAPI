@@ -16,7 +16,7 @@ class DatabaseConnection:
         self.password = password or os.getenv("DB_PASSWORD")
         self.database = database or os.getenv("DB_NAME", "twitch_api")
 
-    async def get_db_connection(self):
+    def get_db_connection(self):
         if not self.password:
             raise ValueError("DB_PASSWORD is missing on environment variables")
         
