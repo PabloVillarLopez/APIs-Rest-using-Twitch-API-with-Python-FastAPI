@@ -4,11 +4,27 @@ from pydantic import BaseModel, Field
 from config.connections import DatabaseConnection
 import os
 
+from dotenv import load_dotenv
+from fastapi.responses import JSONResponse
+
+load_dotenv()
+
 app = FastAPI()
 
 @app.get('/')
 def root():
     return {"message": "Welcome to Pablo's twitch api"}
+
+class UserCreate(BaseModel):
+    name: str
+    followed_streamers: str
+
+class UserUpdate(BaseModel):
+    name: str
+    followed_streamers: str
+
+def get_db():
+    return DatabaseConnection()
 
 @app.get('/users')
 async def read_users():

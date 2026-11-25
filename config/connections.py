@@ -1,19 +1,30 @@
 import mysql.connector
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 class DatabaseConnection:
-    def __init__(self, host: str, user: str, password: str, database: str):
-        self.host = host
-        self.user = user
-        self.password = password
-        self.database = database
+    def __init__(
+            self, 
+            host: str | None = None,
+            user: str | None = None,
+            password: str | None = None, 
+            database: str | None = None):
+        self.host = host or os.getenv("DB_HOST", "localhost")
+        self.user = user or os.getenv("DB_USER", "root")
+        self.password = password or os.getenv("DB_PASSWORD")
+        self.database = database or os.getenv("DB_NAME", "twitch_api")
         self.mydb = None
 
     async def get_db_connection(self):
+        if not self.password:
+            raise ValueError("DB_PASSWORD is missing on environment variables")
         if self.mydb is None:
             self.mydb = mysql.connector.connect(
-                host= "localhost",
-                user= "root",
-                password = "",
-                database = "twitch_api"
+                host= self.host,
+                user= self.user,
+                password = self.password,
+                database = self.database
             )
         return self.mydb
